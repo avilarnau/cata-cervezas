@@ -60,7 +60,7 @@
     /* === MODO PANTALLA COMPLETA CON DESLIZAMIENTO === */
   .viewport{overflow:hidden;height:calc(100dvh - 140px);}
   .track{display:flex;height:100%;transition:transform 300ms ease;touch-action:pan-y;}
-  .slide{flex:0 0 100vw;max-width:100vw;padding:16px;display:flex;flex-direction:column;gap:8px}
+  .slide{flex:0 0 100vw;max-width:100vw;padding:16px;display:flex;flex-direction:column;gap:8px;height:calc(100dvh - 140px);}
   .pager{display:flex;gap:6px;justify-content:center;margin:12px 0}
   .pager button{width:10px;height:10px;border-radius:50%;border:1px solid var(--border);background:var(--card);cursor:pointer}
   .pager button.active{background:var(--accent);border-color:var(--accent)}
@@ -74,7 +74,6 @@
 
   <div class="container">
     <div class="toolbar">
-      <label style="display:flex; align-items:center; gap:8px;">Importar JSON <input id="importJson" type="file" accept="application/json" /></label>
         <!-- Selector de densidad (1/2/3 columnas) -->
         <select id="density" aria-label="Densidad de tarjetas">
           <option value="1">1 columna</option>
@@ -181,17 +180,7 @@
       return s.replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     }
 
-    function importJSONFile(file){
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(reader.result);
-          localStorage.setItem(storageKey, JSON.stringify(data));
-          render();
-        } catch(e){ alert('Archivo JSON no válido'); }
-      };
-      reader.readAsText(file);
-    }
+    
 
     
 
@@ -263,11 +252,6 @@
     }
 
     // Events (comprobamos existencia antes de adjuntar listeners para evitar errores en entornos sin DOM completo)
-    const inputImportJson = document.getElementById('importJson');
-    if (inputImportJson) inputImportJson.addEventListener('change', (e)=>{
-      if (e.target.files && e.target.files[0]) importJSONFile(e.target.files[0]);
-    });
-
     const selDensity = document.getElementById('density');
     if (selDensity) selDensity.addEventListener('change', updateDensity);
 
