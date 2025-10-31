@@ -119,7 +119,6 @@
     }
     function saveState(state) {
       localStorage.setItem(storageKey, JSON.stringify(state));
-      updateComparatives();
     }
 
     function render() {
@@ -149,7 +148,6 @@
       });
 
       updateDensity();
-      updateComparatives();
     }
 
     function row(labelTxt, key, value, id){
@@ -180,35 +178,7 @@
     }
 
     function escapeHtml(s){
-      return s.replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
-    }
-
-    function exportJSON(){
-      const blob = new Blob([JSON.stringify(loadState(), null, 2)], { type: 'application/json' });
-      downloadBlob(blob, 'cata-cervezas.json');
-    }
-
-    function exportCSV(){
-      const state = loadState();
-      const rows = [['Cerveza','Aroma','Sabor','Cuerpo','Final','Global (media)','Comentarios']];
-      beers.forEach(b => {
-        const s = state[b.id] || {}; 
-        const aroma = s.aroma ?? '';
-        const sabor = s.sabor ?? '';
-        const cuerpo = s.cuerpo ?? '';
-        const final = s.final ?? '';
-        const global = [aroma,sabor,cuerpo,final].every(x=>x!=='') ? ((aroma+sabor+cuerpo+final)/4).toFixed(2) : '';
-        rows.push([b.nombre, aroma, sabor, cuerpo, final, global, (s.notas||'').replace(/\n/g,' ') ]);
-      });
-      const csv = rows.map(r => r.map(x => `"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
-      downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), 'cata-cervezas.csv');
-    }
-
-    function downloadBlob(blob, filename){
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = filename; a.click();
-      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      return s.replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     }
 
     function importJSONFile(file){
@@ -223,38 +193,7 @@
       reader.readAsText(file);
     }
 
-    function avg(arr){ return arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2) : '–'; }
-
-    function updateComparatives(){
-      const state = loadState();
-      const isOH = id => id.startsWith('oh-');
-      const isSoma = id => id.startsWith('soma-') || id==='soma-born' || id==='soma-boom';
-
-      const oh = beers.filter(b => isOH(b.id)).map(b => state[b.id]).filter(Boolean);
-      const so = beers.filter(b => isSoma(b.id)).map(b => state[b.id]).filter(Boolean);
-
-      const ohAroma = avg(oh.map(s=>s.aroma||0).filter(Boolean));
-      const soAroma = avg(so.map(s=>s.aroma||0).filter(Boolean));
-      const ohSabor = avg(oh.map(s=>s.sabor||0).filter(Boolean));
-      const soSabor = avg(so.map(s=>s.sabor||0).filter(Boolean));
-      const ohCuerpo = avg(oh.map(s=>s.cuerpo||0).filter(Boolean));
-      const soCuerpo = avg(so.map(s=>s.cuerpo||0).filter(Boolean));
-      const ohFinal = avg(oh.map(s=>s.final||0).filter(Boolean));
-      const soFinal = avg(so.map(s=>s.final||0).filter(Boolean));
-      const ohGlobal = avg(oh.map(s=> (s.aroma+s.sabor+s.cuerpo+s.final)/4 || 0).filter(Boolean));
-      const soGlobal = avg(so.map(s=> (s.aroma+s.sabor+s.cuerpo+s.final)/4 || 0).filter(Boolean));
-
-      document.getElementById('avg-oh-aroma').textContent = ohAroma;
-      document.getElementById('avg-soma-aroma').textContent = soAroma;
-      document.getElementById('avg-oh-sabor').textContent = ohSabor;
-      document.getElementById('avg-soma-sabor').textContent = soSabor;
-      document.getElementById('avg-oh-cuerpo').textContent = ohCuerpo;
-      document.getElementById('avg-soma-cuerpo').textContent = soCuerpo;
-      document.getElementById('avg-oh-final').textContent = ohFinal;
-      document.getElementById('avg-soma-final').textContent = soFinal;
-      document.getElementById('avg-oh-global').textContent = ohGlobal;
-      document.getElementById('avg-soma-global').textContent = soGlobal;
-    }
+    
 
     // === Slider pantalla completa ===
     let current = 0;
@@ -321,16 +260,9 @@
       buildPager();
       attachSwipe(track);
       goto(current);
-      updateComparatives();
     }
 
     // Events (comprobamos existencia antes de adjuntar listeners para evitar errores en entornos sin DOM completo)
-    const btnDownloadCsv = document.getElementById('downloadCsv');
-    if (btnDownloadCsv) btnDownloadCsv.addEventListener('click', exportCSV);
-
-    const btnDownloadJson = document.getElementById('downloadJson');
-    if (btnDownloadJson) btnDownloadJson.addEventListener('click', exportJSON);
-
     const inputImportJson = document.getElementById('importJson');
     if (inputImportJson) inputImportJson.addEventListener('change', (e)=>{
       if (e.target.files && e.target.files[0]) importJSONFile(e.target.files[0]);
