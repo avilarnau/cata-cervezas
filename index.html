@@ -68,21 +68,25 @@
 </head>
 <body>
   <header>
+    <!-- Icono de cerveza (inline SVG) -->
+    <div class="logo" aria-hidden="true">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" role="img">
+        <title>Cerveza</title>
+        <path d="M7 3h6v2H7V3z" fill="#F5D76E"/>
+        <path d="M6 5h8v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5z" fill="#F7B500"/>
+        <path d="M14 7h3a2 2 0 0 1 2 2v4a3 3 0 0 1-3 3h-2" stroke="#E6B000" stroke-width="0.6"/>
+        <path d="M6 3v-1" stroke="#000" stroke-opacity="0.05"/>
+        <rect x="7" y="1" width="6" height="2" rx="1" fill="#FFF" opacity="0.9"/>
+      </svg>
+    </div>
     <h1>Cata de Cervezas Músics</h1>
     <div class="sub">Rellena en el móvil. Tu progreso se guarda automáticamente en este dispositivo.</div>
   </header>
 
   <div class="container">
-    <div class="toolbar">
-        <!-- Selector de densidad (1/2/3 columnas) -->
-        <select id="density" aria-label="Densidad de tarjetas">
-          <option value="1">1 columna</option>
-          <option value="2" selected>2 columnas</option>
-          <option value="3">3 columnas</option>
-        </select>
-        <button id="resetAll">Borrar todo</button>
-        <div class="spacer"></div>
-    </div>
+  <div class="toolbar">
+    <div class="spacer"></div>
+  </div>
 
     <!-- Contenedor de tarjetas usado por render() -->
     <div id="cards" class="grid" aria-live="polite"></div>
@@ -146,7 +150,7 @@
         ta.addEventListener('input', () => commit(b.id, 'notas', ta.value));
       });
 
-      updateDensity();
+      // no density selection anymore; keep simple render
     }
 
     function row(labelTxt, key, value, id){
@@ -167,14 +171,7 @@
       saveState(state);
     }
 
-    function updateDensity(){
-      const sel = document.getElementById('density');
-      const grid = document.getElementById('cards');
-      const val = Number(sel.value);
-      if (val === 1) grid.style.gridTemplateColumns = '1fr';
-      if (val === 2) grid.style.gridTemplateColumns = '1fr 1fr';
-      if (val === 3) grid.style.gridTemplateColumns = '1fr 1fr 1fr';
-    }
+    /* density selection removed */
 
     function escapeHtml(s){
       return s.replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -252,16 +249,7 @@
     }
 
     // Events (comprobamos existencia antes de adjuntar listeners para evitar errores en entornos sin DOM completo)
-    const selDensity = document.getElementById('density');
-    if (selDensity) selDensity.addEventListener('change', updateDensity);
-
-    const btnResetAll = document.getElementById('resetAll');
-    if (btnResetAll) btnResetAll.addEventListener('click', ()=>{
-      if (confirm('¿Seguro que quieres borrar todas las notas guardadas en este dispositivo?')){
-        localStorage.removeItem(storageKey);
-        render();
-      }
-    });
+    // density selector and reset button removed
 
     // Initial render
     renderFull();
