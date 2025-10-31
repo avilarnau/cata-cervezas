@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cata de Cervezas</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --card: #141a22;
+      --text: #e6edf3;
+      --muted: #9fb1c7;
+      --accent: #6ac2ff;
+      --border: #223041;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    header {
+      position: sticky; top: 0; z-index: 10; backdrop-filter: blur(8px);
+      background: linear-gradient(180deg, rgba(11,15,20,.9), rgba(11,15,20,.6));
+      border-bottom: 1px solid var(--border); padding: 12px 16px;
+    }
+    header h1 { margin: 0; font-size: 18px; }
+    header .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .container { max-width: 980px; margin: 16px auto 80px; padding: 0 12px; }
+
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 16px; }
+    .toolbar button, .toolbar select, .toolbar input[type="file"] {
+      background: var(--card); color: var(--text); border: 1px solid var(--border);
+      padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 14px;
+    }
+    .toolbar button:hover { border-color: var(--accent); }
+    .toolbar .spacer { flex: 1; }
+
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 680px) { .grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 980px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+    .title { font-weight: 700; font-size: 16px; margin: 0 0 6px; }
+    .meta { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+    .desc { font-size: 13px; color: #c8d6e5; margin-bottom: 10px; }
+
+    .row { display: grid; grid-template-columns: 100px 1fr 46px; gap: 8px; align-items: center; margin: 6px 0; }
+    .row label { font-size: 13px; color: var(--muted); }
+    input[type="range"] { width: 100%; }
+    .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--accent); }
+
+    textarea { width: 100%; min-height: 72px; resize: vertical; padding: 8px; border-radius: 12px; background: #0e141b; color: var(--text); border: 1px solid var(--border); font-size: 13px; }
+
+    .compare { margin-top: 24px; padding: 16px; border: 1px dashed var(--border); border-radius: 16px; background: #0e141b; }
+    .compare h3 { margin: 0 0 8px; font-size: 16px; }
+    .compare .table { width: 100%; border-collapse: collapse; }
+    .compare .table th, .compare .table td { border: 1px solid var(--border); padding: 8px; font-size: 13px; }
+    .muted { color: var(--muted); }
+
+    footer { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, rgba(11,15,20,1), rgba(11,15,20,.6)); border-top: 1px solid var(--border); padding: 10px 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    footer .hint { color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cata de Cervezas</h1>
+    <div class="sub">Rellena en el móvil. Tu progreso se guarda automáticamente en este dispositivo.</div>
+  </header>
+
+  <div class="container">
+    <div class="toolbar">
+      <button id="downloadCsv">Exportar CSV</button>
+      <button id="downloadJson">Exportar JSON</button>
+      <label style="display:flex; align-items:center; gap:8px;">Importar JSON <input id="importJson" type="file" accept="application/json" /></label>
+      <div class="spacer"></div>
+      <select id="density">
+        <option value="1">Densidad: 1 por fila</option>
+        <option value="2">Densidad: 2 por fila</option>
+        <option value="3" selected>Densidad: 3 por fila</option>
+      </select>
+      <button id="resetAll" title="Borra todas las notas de este dispositivo">Reset</button>
+    </div>
+
+    <div id="cards" class="grid"></div>
+
+    <section class="compare" id="compare">
+      <h3>Comparativa Other Half vs Soma</h3>
+      <p class="muted">Promedios calculados a partir de tus notas (1–5). Actualiza al editar.</p>
+      <table class="table">
+        <thead>
+          <tr><th>Aspecto</th><th>Other Half</th><th>Soma</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Aroma</td><td id="avg-oh-aroma">–</td><td id="avg-soma-aroma">–</td></tr>
+          <tr><td>Sabor</td><td id="avg-oh-sabor">–</td><td id="avg-soma-sabor">–</td></tr>
+          <tr><td>Cuerpo</td><td id="avg-oh-cuerpo">–</td><td id="avg-soma-cuerpo">–</td></tr>
+          <tr><td>Final</td><td id="avg-oh-final">–</td><td id="avg-soma-final">–</td></tr>
+          <tr><td>Global</td><td id="avg-oh-global">–</td><td id="avg-soma-global">–</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <footer>
+    <span class="hint">Sugerencia: añade esta página a tu pantalla de inicio para acceso rápido.</span>
+  </footer>
+
+  <script>
+    const beers = [
+      { id: 'schneider-hopfenweisse', nombre: 'Schneider Weisse Hopfenweisse', estilo: 'Weizendoppelbock (Alemania, 8.2%)', desc: 'Trigo fuerte con dry hopping. Plátano, clavo y lúpulo herbal.' },
+      { id: 'cloudwater-pale', nombre: 'Cloudwater Pale Ale', estilo: 'Pale Ale (Inglaterra, 5%)', desc: 'Ligera y refrescante, notas cítricas y florales.' },
+      { id: 'soma-born', nombre: 'Soma Born & Raised', estilo: 'Double IPA (España, 8%)', desc: 'Tropical, resinosa y equilibrada. IPA moderna de Girona.' },
+      { id: 'oh-mylar', nombre: 'Other Half – Mylar Dust', estilo: 'DDH Imperial IPA (EE.UU., 8.5%)', desc: 'Aroma explosivo: mango, melocotón, pino. Textura cremosa.' },
+      { id: 'oh-citra-mosaic', nombre: 'Other Half – Citra + Mosaic', estilo: 'DDH Imperial IPA (EE.UU., 8.5%)', desc: 'Más seca y cítrica: pomelo y resina.' },
+      { id: 'soma-boom', nombre: 'Soma – Boom', estilo: 'Triple IPA (España, 10%)', desc: 'Potente y frutal, dulzor alcohólico equilibrado.' },
+      { id: 'spon-mix', nombre: 'SPON – Mix Down III', estilo: 'Salvaje con Xarel·lo y Parellada (España, 7%)', desc: 'Ácida, vinosa y con madera.' },
+      { id: 'spon-wild', nombre: 'SPON – Wild Beats', estilo: 'Barrel Aged con Frambuesa (España, 7%)', desc: 'Fruta roja, acidez punzante, toque balsámico.' },
+      { id: 'tilquin-pinot-gris', nombre: 'Tilquin – Oude Pinot Gris à l’ancienne', estilo: 'Lambic con uva Pinot Gris (Bélgica, 7%)', desc: 'Ácida, elegante, vinoso-terrosa.' }
+    ];
+
+    const storageKey = 'cata-cervezas-v1';
+
+    function loadState() {
+      try { return JSON.parse(localStorage.getItem(storageKey)) || {}; } catch { return {}; }
+    }
+    function saveState(state) {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      updateComparatives();
+    }
+
+    function render() {
+      const state = loadState();
+      const root = document.getElementById('cards');
+      root.innerHTML = '';
+
+      beers.forEach(b => {
+        const s = state[b.id] || { aroma: 3, sabor: 3, cuerpo: 3, final: 3, notas: '' };
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `$1${row('Aroma', 'aroma', s.aroma, b.id)}$2${row('Sabor', 'sabor', s.sabor, b.id)}$3${row('Cuerpo', 'cuerpo', s.cuerpo, b.id)}$4${row('Final', 'final', s.final, b.id)}
+          <div style="margin-top:10px">
+            <label class="muted" for="${b.id}-notas">Comentarios</label>
+            <textarea id="${b.id}-notas" placeholder="Tus notas...">${escapeHtml(s.notas || '')}</textarea>
+          </div>
+        `;
+        root.appendChild(card);
+
+        ['aroma','sabor','cuerpo','final'].forEach(k => {
+          const input = card.querySelector(`#${b.id}-${k}`);
+          const out = card.querySelector(`#${b.id}-${k}-val`);
+          input.addEventListener('input', () => { out.textContent = input.value; commit(b.id, k, Number(input.value)); });
+        });
+        const ta = card.querySelector(`#${b.id}-notas`);
+        ta.addEventListener('input', () => commit(b.id, 'notas', ta.value));
+      });
+
+      updateDensity();
+      updateComparatives();
+    }
+
+    function row(labelTxt, key, value, id){
+      return `
+        <div class="row">
+          <label for="${id}-${key}">${labelTxt}</label>
+          <input type="range" min="1" max="5" step="1" id="${id}-${key}" value="${value}" />
+          <div class="val" id="${id}-${key}-val">${value}</div>
+        </div>
+      `;
+    }
+
+    // Helper to ensure unique id prefix per render row
+        function commit(id, key, value){
+      const state = loadState();
+      state[id] = state[id] || { aroma: 3, sabor: 3, cuerpo: 3, final: 3, notas: '' };
+      state[id][key] = value;
+      saveState(state);
+    }
+
+    function updateDensity(){
+      const sel = document.getElementById('density');
+      const grid = document.getElementById('cards');
+      const val = Number(sel.value);
+      if (val === 1) grid.style.gridTemplateColumns = '1fr';
+      if (val === 2) grid.style.gridTemplateColumns = '1fr 1fr';
+      if (val === 3) grid.style.gridTemplateColumns = '1fr 1fr 1fr';
+    }
+
+    function escapeHtml(s){
+      return s.replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
+    }
+
+    function exportJSON(){
+      const blob = new Blob([JSON.stringify(loadState(), null, 2)], { type: 'application/json' });
+      downloadBlob(blob, 'cata-cervezas.json');
+    }
+
+    function exportCSV(){
+      const state = loadState();
+      const rows = [['Cerveza','Aroma','Sabor','Cuerpo','Final','Global (media)','Comentarios']];
+      beers.forEach(b => {
+        const s = state[b.id] || {}; 
+        const aroma = s.aroma ?? '';
+        const sabor = s.sabor ?? '';
+        const cuerpo = s.cuerpo ?? '';
+        const final = s.final ?? '';
+        const global = [aroma,sabor,cuerpo,final].every(x=>x!=='') ? ((aroma+sabor+cuerpo+final)/4).toFixed(2) : '';
+        rows.push([b.nombre, aroma, sabor, cuerpo, final, global, (s.notas||'').replace(/\n/g,' ') ]);
+      });
+      const csv = rows.map(r => r.map(x => `"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+      downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), 'cata-cervezas.csv');
+    }
+
+    function downloadBlob(blob, filename){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    }
+
+    function importJSONFile(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          localStorage.setItem(storageKey, JSON.stringify(data));
+          render();
+        } catch(e){ alert('Archivo JSON no válido'); }
+      };
+      reader.readAsText(file);
+    }
+
+    function avg(arr){ return arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2) : '–'; }
+
+    function updateComparatives(){
+      const state = loadState();
+      const isOH = id => id.startsWith('oh-');
+      const isSoma = id => id.startsWith('soma-') || id==='soma-born' || id==='soma-boom';
+
+      const oh = beers.filter(b => isOH(b.id)).map(b => state[b.id]).filter(Boolean);
+      const so = beers.filter(b => isSoma(b.id)).map(b => state[b.id]).filter(Boolean);
+
+      const ohAroma = avg(oh.map(s=>s.aroma||0).filter(Boolean));
+      const soAroma = avg(so.map(s=>s.aroma||0).filter(Boolean));
+      const ohSabor = avg(oh.map(s=>s.sabor||0).filter(Boolean));
+      const soSabor = avg(so.map(s=>s.sabor||0).filter(Boolean));
+      const ohCuerpo = avg(oh.map(s=>s.cuerpo||0).filter(Boolean));
+      const soCuerpo = avg(so.map(s=>s.cuerpo||0).filter(Boolean));
+      const ohFinal = avg(oh.map(s=>s.final||0).filter(Boolean));
+      const soFinal = avg(so.map(s=>s.final||0).filter(Boolean));
+      const ohGlobal = avg(oh.map(s=> (s.aroma+s.sabor+s.cuerpo+s.final)/4 || 0).filter(Boolean));
+      const soGlobal = avg(so.map(s=> (s.aroma+s.sabor+s.cuerpo+s.final)/4 || 0).filter(Boolean));
+
+      document.getElementById('avg-oh-aroma').textContent = ohAroma;
+      document.getElementById('avg-soma-aroma').textContent = soAroma;
+      document.getElementById('avg-oh-sabor').textContent = ohSabor;
+      document.getElementById('avg-soma-sabor').textContent = soSabor;
+      document.getElementById('avg-oh-cuerpo').textContent = ohCuerpo;
+      document.getElementById('avg-soma-cuerpo').textContent = soCuerpo;
+      document.getElementById('avg-oh-final').textContent = ohFinal;
+      document.getElementById('avg-soma-final').textContent = soFinal;
+      document.getElementById('avg-oh-global').textContent = ohGlobal;
+      document.getElementById('avg-soma-global').textContent = soGlobal;
+    }
+
+    // Events
+    document.getElementById('downloadCsv').addEventListener('click', exportCSV);
+    document.getElementById('downloadJson').addEventListener('click', exportJSON);
+    document.getElementById('importJson').addEventListener('change', (e)=>{
+      if (e.target.files && e.target.files[0]) importJSONFile(e.target.files[0]);
+    });
+    document.getElementById('density').addEventListener('change', updateDensity);
+    document.getElementById('resetAll').addEventListener('click', ()=>{
+      if (confirm('¿Seguro que quieres borrar todas las notas guardadas en este dispositivo?')){
+        localStorage.removeItem(storageKey); render();
+      }
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
