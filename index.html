@@ -77,9 +77,19 @@
       <button id="downloadCsv">Exportar CSV</button>
       <button id="downloadJson">Exportar JSON</button>
       <label style="display:flex; align-items:center; gap:8px;">Importar JSON <input id="importJson" type="file" accept="application/json" /></label>
+        <!-- Selector de densidad (1/2/3 columnas) -->
+        <select id="density" aria-label="Densidad de tarjetas">
+          <option value="1">1 columna</option>
+          <option value="2" selected>2 columnas</option>
+          <option value="3">3 columnas</option>
+        </select>
+        <button id="resetAll">Borrar todo</button>
+        <div class="spacer"></div>
       <div class="spacer"></div>
+
+    <section class="compare" id="compare">
          <section class="compare" id="compare">
-      <h3>Comparativa Other Half vs Soma</h3>
+      <p class="muted">Promedio de tus notas (1–5). Actualiza al editar.</p>
       <p class="muted"us notas (1–5). Actualiza al editar.</p>
       <table class="table">
         <thead>
@@ -93,6 +103,14 @@
           <tr><td>Global</td><td id="avg-oh-global">–</td><td id="avg-soma-global">–</td></tr>
         </tbody>
       </table>
+    <!-- Contenedor de tarjetas usado por render() -->
+    <div id="cards" class="grid" aria-live="polite"></div>
+
+    <!-- Viewport / track / pager para modo pantalla completa -->
+    <div class="viewport" role="region" aria-label="Modo pantalla completa">
+      <div id="track" class="track"></div>
+    </div>
+    <div id="pager" class="pager" aria-hidden="false"></div>
     </section>
   </div>
 
@@ -325,16 +343,26 @@
       updateComparatives();
     }
 
-    // Events
-    document.getElementById('downloadCsv').addEventListener('click', exportCSV);
-    document.getElementById('downloadJson').addEventListener('click', exportJSON);
-    document.getElementById('importJson').addEventListener('change', (e)=>{
+    // Events (comprobamos existencia antes de adjuntar listeners para evitar errores en entornos sin DOM completo)
+    const btnDownloadCsv = document.getElementById('downloadCsv');
+    if (btnDownloadCsv) btnDownloadCsv.addEventListener('click', exportCSV);
+
+    const btnDownloadJson = document.getElementById('downloadJson');
+    if (btnDownloadJson) btnDownloadJson.addEventListener('click', exportJSON);
+
+    const inputImportJson = document.getElementById('importJson');
+    if (inputImportJson) inputImportJson.addEventListener('change', (e)=>{
       if (e.target.files && e.target.files[0]) importJSONFile(e.target.files[0]);
     });
-    document.getElementById('density').addEventListener('change', updateDensity);
-    document.getElementById('resetAll').addEventListener('click', ()=>{
+
+    const selDensity = document.getElementById('density');
+    if (selDensity) selDensity.addEventListener('change', updateDensity);
+
+    const btnResetAll = document.getElementById('resetAll');
+    if (btnResetAll) btnResetAll.addEventListener('click', ()=>{
       if (confirm('¿Seguro que quieres borrar todas las notas guardadas en este dispositivo?')){
-        localStorage.removeItem(storageKey); render();
+        localStorage.removeItem(storageKey);
+        render();
       }
     });
 
