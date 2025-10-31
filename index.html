@@ -74,8 +74,6 @@
 
   <div class="container">
     <div class="toolbar">
-      <button id="downloadCsv">Exportar CSV</button>
-      <button id="downloadJson">Exportar JSON</button>
       <label style="display:flex; align-items:center; gap:8px;">Importar JSON <input id="importJson" type="file" accept="application/json" /></label>
         <!-- Selector de densidad (1/2/3 columnas) -->
         <select id="density" aria-label="Densidad de tarjetas">
@@ -85,24 +83,8 @@
         </select>
         <button id="resetAll">Borrar todo</button>
         <div class="spacer"></div>
-      <div class="spacer"></div>
+    </div>
 
-    <section class="compare" id="compare">
-         <section class="compare" id="compare">
-      <p class="muted">Promedio de tus notas (1–5). Actualiza al editar.</p>
-      <p class="muted"us notas (1–5). Actualiza al editar.</p>
-      <table class="table">
-        <thead>
-          <tr><th>Aspecto</th><th>Other Half</th><th>Soma</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Aroma</td><td id="avg-oh-aroma">–</td><td id="avg-soma-aroma">–</td></tr>
-          <tr><td>Sabor</td><td id="avg-oh-sabor">–</td><td id="avg-soma-sabor">–</td></tr>
-          <tr><td>Cuerpo</td><td id="avg-oh-cuerpo">–</td><td id="avg-soma-cuerpo">–</td></tr>
-          <tr><td>Final</td><td id="avg-oh-final">–</td><td id="avg-soma-final">–</td></tr>
-          <tr><td>Global</td><td id="avg-oh-global">–</td><td id="avg-soma-global">–</td></tr>
-        </tbody>
-      </table>
     <!-- Contenedor de tarjetas usado por render() -->
     <div id="cards" class="grid" aria-live="polite"></div>
 
@@ -111,7 +93,6 @@
       <div id="track" class="track"></div>
     </div>
     <div id="pager" class="pager" aria-hidden="false"></div>
-    </section>
   </div>
 
   <footer>
